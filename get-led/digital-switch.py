@@ -6,7 +6,7 @@ GPIO.setmode(GPIO.BCM)
 led = 26
 GPIO.setup(led, GPIO.OUT)
 
-botton = 13
+button = 13
 GPIO.setup(button, GPIO.IN)
 
 state = 0
