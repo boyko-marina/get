@@ -1,14 +1,18 @@
 import RPi.GPIO as GPIO
-
+import time
 
 GPIO.setmode(GPIO.BCM)
 
 led = 26
 GPIO.setup(led, GPIO.OUT)
 
-foto_trans = 6
-GPIO.setup(foro_trans, GPIO.IN)
+button = 13
+GPIO.setup(button, GPIO.IN)
+
+state = 0
 
 while True:
-    state = not GPIO.input(foto_trans)
-    GPIO.output(led, state)
+    if GPIO.input(button):
+        state = not state
+        GPIO.output(led, state)
+        time.sleep(0.2)
