@@ -1,5 +1,5 @@
-import pwm_dac
-import signal_generator_sin as sg 
+import mcp4725_driver as mcp4725
+import signal_generator_sin as sg
 
 import time
 
@@ -9,7 +9,7 @@ sampling_frequency = 1000
 
 if __name__ == "__main__":
     try:
-        dac = pwm_dac.PWM_DAC(12, 500, 3.290, True)
+        dac = mcp4725.MCP4725(5.21, 0x61 ,False)
         start_time = time.time()
 
         while True:
