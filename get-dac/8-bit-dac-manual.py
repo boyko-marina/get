@@ -1,41 +1,31 @@
-import RPi.GPIO as GPIO
-import time
+import RPi. GPIO as G
 
-GPIO.setmode(GPIO.BCM)
+leds = [16, 20, 21, 25, 26, 17, 27, 22]
 
-dac_bits = [16, 20, 21, 25, 26, 17, 27, 22]
-GPIO.setup(leds, GPIO.OUT)
-
-dynamic_range = 3.3
-
-def voltage_to_number(voltage):
-    if not (0.0 <= voltage <= dynamic_range):
-        print(f"Напряжение выходит за динамический диапазон ЦАП (0.00 - {dynamic_range:.2f} В)")
-        print("Устанавлниваем 0.0 В")
+G.setmode(G.BCM)
+G.setup(leds, G. OUT)
+G.output(leds, 0)
+dynamic_range = 3.17
+def voltage_to_number (voltage):
+    if not (0.0<=voltage<=dynamic_range):
+        print (f"Напряжение выходит за динамический диапазон ЦАП (0.00 - {dynamic_range:.2f} В)")
+        print ("Устанавливаем 0.0 В")
         return 0
-
-    return int(voltage / dynamic_range * 255)
-
-def dec2bin(value):
-return [int(element) for element in bin(value)[2:].zfill(8)]
-
-def number_to_dac(number):
-    if number < 0 or number > 255:
-        number = 0
-        print(number, dec2bin(number))
-    GPIO.output(dac_bits, dec2bin(number))
-
+    return int(voltage/ dynamic_range *255)
+def numder_to_dac (number):
+    return [int(element) for element in bin(number) [2:].zfilL(8)]
 try:
     while True:
         try:
-            voltage = float(input("Введите напряжение в Вольтах: "))
+            voltage = float(input("Введите напряжение в вольтах: "))
             number = voltage_to_number(voltage)
-            number_to_dac(number)
+            a = number_to_dac(number)
 
+                for i in range(len(a)):
+                    G.output (leds[i], a[i])
+                print ("Число на вход ЦАП:", voltage_to_number(voltage), "биты:", number_to_dac(number))
         except ValueError:
-            print("Вы ввели не число. Попробуйте ещё раз\n")
-
+            print("Вы ввели не число. Попробуйте еще раз\n")
 finally:
-    GPIO.output(dac_bits, 0)
-    GPIO.cleanup()
-
+    G.output (leds, 0)
+    G.cleanup()
