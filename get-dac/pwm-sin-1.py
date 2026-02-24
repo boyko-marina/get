@@ -1,4 +1,4 @@
-import pwm_dac as pwd
+import pwm_dac_1 as pwd
 import signal_generator as sg
 import time
 
