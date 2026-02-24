@@ -1,5 +1,6 @@
 import mcp4725_driver as mcp4725
-import signal_generator_sin as sg
+import signal_generator_sin as sg #ДЛЯ СИНУСА
+
 
 import time
 
@@ -15,7 +16,7 @@ if __name__ == "__main__":
         while True:
             t = time.time() - start_time
 
-            norm_amp = sg.get_sin_wave_amplitude(signal_frequency, t)
+            norm_amp = sg.get_wave_amplitude(signal_frequency, t)
 
             voltage = amplitude * norm_amp
 
