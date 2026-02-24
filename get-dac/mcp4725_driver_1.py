@@ -1,46 +1,53 @@
 import smbus
-#import RPi.GPIO as GPIO
-
 
 class MCP4725:
-    def __init__(self, dynamic_range, address=0x61, verbose = True):
-        self.bus = smbus.SMBus(1)
-        self.address=address
-        self.wm = 0x00
-        self.pds = 0x00
+    def __init__(self, dynamic_range, address=0x61, verbose=True):
+        self.bus = smbus.SMBus(1)          # шина I2C №1 (стандартная для Raspberry Pi)
+        self.address = address
+        self.wm = 0x00                      # режим записи без EEPROM
+        self.pds = 0x00                      # нормальный режим (не power-down)
         self.verbose = verbose
-        self.dynamic_range = dynamic_range
+        self.dynamic_range = dynamic_range   # опорное напряжение (макс. выход)
 
     def deinit(self):
+        """Закрытие I2C-шины"""
         self.bus.close()
 
     def set_number(self, number):
+        """Прямая запись 12-битного кода (0..4095) в ЦАП"""
         if not isinstance(number, int):
-            print("На вход ЦАП можно подавать только целые числа")
-        if not (0<=number<=4095):
-            print("Число выходит за разрядность MCP4752 (12 бит)")
-        first_byte = self.wm | self.pds | number >> 8
-        second_byte = number & 0xFF
-        self.bus.write_byte_data(0x61, first_byte, second_byte)
+            print("Ошибка: значение должно быть целым числом")
+            return
+        if not (0 <= number <= 4095):
+            print("Ошибка: число выходит за пределы 12 бит (0–4095)")
+            return
+        # Упаковка: первый байт = управляющие биты + старшие 4 бита данных
+        first_byte = self.wm | self.pds | ((number >> 8) & 0x0F)
+        second_byte = number & 0xFF          # младшие 8 бит
+        self.bus.write_byte_data(self.address, first_byte, second_byte)
         if self.verbose:
-            print(f"Число: {number}, отправленные по I2C данные: [0x{(self.address << 1):02X}, 0x{first_byte:02X}, 0x{second_byte:02X}]")
+            print(f"Установлен код {number:4d} -> напряжение {number/4095*self.dynamic_range:.3f} В")
 
     def set_voltage(self, voltage):
-        if not(0.0 <= voltage <= self.dynamic_range):
-            print(f"Напряжение выходит за динамический диапазон ЦАП (0.00 - {self.dynamic_range:.2f} B")
-            print("Устанавливаем 0.0В")
-            return 0
-        MCP4725.set_number(self, int(voltage/self.dynamic_range * 4096))
+        """Установка выходного напряжения (0 .. dynamic_range)"""
+        if not (0.0 <= voltage <= self.dynamic_range):
+            print(f"Напряжение {voltage:.2f} В вне диапазона (0–{self.dynamic_range:.2f} В). Устанавливаю 0 В.")
+            voltage = 0.0
+        code = int(voltage / self.dynamic_range * 4095)   # 4095 соответствует Vref
+        self.set_number(code)
 
-if __name__ == "__main__":
+# Простой тест при запуске модуля отдельно
+if name == "__main__":
     try:
-        mcp = MCP4725(5.0, 0x61, True)
+        dac = MCP4725(5.0, 0x61, True)
         while True:
             try:
-                voltage = float(input("Введите напряжение в Вольтах: "))
-                mcp.set_voltage(voltage)
+                v = float(input("Введите напряжение (В): "))
+                dac.set_voltage(v)
             except ValueError:
-                print("Вы ввели не число")
-
+                print("Ошибка ввода, повторите")
+            except KeyboardInterrupt:
+                print("\nЗавершение")
+                break
     finally:
-        mcp.deinit()
+        dac.deinit()
