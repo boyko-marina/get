@@ -1,38 +1,56 @@
 import mcp4725_driver_1 as mcpdr
 import signal_generator as sg
 import time
+import sys
 
-# Параметры генерируемого сигнала
-amplitude = 3.2          # амплитуда (В) – не должна превышать dynamic_range ЦАП
-signal_frequency = 10    # частота синуса (Гц)
-sampling_frequency = 500 # частота дискретизации (Гц)
+# Параметры сигнала
+amplitude = 3.2
+signal_frequency = 10
+sampling_frequency = 500
 
-try:
-    # Инициализация ЦАП MCP4725
-    # dynamic_range = 5.0 В, адрес 0x61, вывод отладочной информации включён
-    dac = mcpdr.MCP4725(dynamic_range=5.0, address=0x61, verbose=True)
-
-    print("Генерация синусоидального сигнала. Для остановки нажмите Ctrl+C")
-    while True:
+def main():
+    dac = None
+    try:
+        # Инициализация с проверкой
         try:
-            # Текущее время
-            t = time.time()
-            # Нормализованное значение синуса от 0 до 1
-            norm_voltage = sg.get_sin_wave_amplitude(signal_frequency, t)
-            # Масштабирование к заданной амплитуде
-            voltage = norm_voltage * amplitude
-            # Установка напряжения на ЦАП
-            dac.set_voltage(voltage)
-            # Выдержка периода дискретизации
-            sg.wait_for_sampling_period(sampling_frequency)
-        except KeyboardInterrupt:
-            print("\nОстановка по запросу пользователя")
-            break
+            dac = mcpdr.MCP4725(dynamic_range=5.0, address=0x61, verbose=True)
+            # Небольшая задержка для стабилизации
+            time.sleep(0.1)
         except Exception as e:
-            print(f"Ошибка в цикле: {e}")
-            break
+            print(f"Не удалось инициализировать MCP4725: {e}")
+            print("Проверьте подключение и включите I2C (sudo raspi-config)")
+            sys.exit(1)
 
-finally:
-    # Корректное закрытие I2C-шины
-    dac.deinit()
-    print("ЦАП деинициализирован")
+        print("Генерация синусоидального сигнала. Для остановки нажмите Ctrl+C")
+        while True:
+            try:
+                t = time.time()
+                norm_voltage = sg.get_sin_wave_amplitude(signal_frequency, t)
+                voltage = norm_voltage * amplitude
+                dac.set_voltage(voltage)
+                sg.wait_for_sampling_period(sampling_frequency)
+            except KeyboardInterrupt:
+                print("\nОстановка по запросу пользователя")
+                break
+            except OSError as e:
+                print(f"Ошибка ввода-вывода I2C: {e}")
+                print("Попытка восстановления...")
+                time.sleep(0.5)
+                # Можно попробовать переинициализировать устройство
+                try:
+                    dac.deinit()
+                    dac = mcpdr.MCP4725(dynamic_range=5.0, address=0x61, verbose=True)
+                except:
+                    print("Не удалось восстановить соединение. Выход.")
+                    break
+            except Exception as e:
+                print(f"Неожиданная ошибка: {e}")
+                break
+
+    finally:
+        if dac:
+            dac.deinit()
+            print("ЦАП деинициализирован")
+
+if name == "__main__":
+    main()
