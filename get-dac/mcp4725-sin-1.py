@@ -6,7 +6,7 @@ import time
 try:
     amplitude = 3.2
     signal_frequency = 10
-    sampling_frequency = 500
+    sampling_frequency = 1000
     mcp = mcpdr.MCP4725(5.0, 0x61, True)
 
     while True:
