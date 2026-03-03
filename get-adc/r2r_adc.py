@@ -3,7 +3,7 @@ import time
 GPIO.setmode(GPIO.BCM)
 
 class R2R_ADC:
-    def __init__(self, dynamic_range, compare_time=0.0001, verbose=False):
+    def __init__(self, dynamic_range, compare_time=0.01, verbose=False):
         self.dynamic_range = dynamic_range
         self.verbose = verbose
         self.compare_time = compare_time
